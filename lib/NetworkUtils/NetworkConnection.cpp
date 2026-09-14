@@ -106,7 +106,29 @@ void NetworkConnection::onEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
       rawDisconnectReason = info.wifi_sta_disconnected.reason;
       disconnectReason = convertDisconnectReason(info.wifi_sta_disconnected.reason);
       break;
-    
+
+    #ifdef USE_ETHERNET
+    case ARDUINO_EVENT_ETH_CONNECTED:
+      // link is up, waiting for DHCP (or already fine if static config)
+      status = useDhcp ? Status::CONNECTING : Status::CONNECTED;
+      rawDisconnectReason = 0;
+      disconnectReason = DisconnectReason::NONE;
+      break;
+
+    case ARDUINO_EVENT_ETH_GOT_IP:
+      status = Status::CONNECTED;
+      rawDisconnectReason = 0;
+      disconnectReason = DisconnectReason::NONE;
+      break;
+
+    case ARDUINO_EVENT_ETH_DISCONNECTED:
+    case ARDUINO_EVENT_ETH_STOP:
+      status = Status::DISCONNECTED;
+      rawDisconnectReason = 0;
+      disconnectReason = DisconnectReason::OTHER;
+      break;
+    #endif
+
     default:
       break;
   }

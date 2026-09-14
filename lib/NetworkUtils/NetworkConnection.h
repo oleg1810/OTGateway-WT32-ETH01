@@ -3,6 +3,9 @@
   #include "lwip/etharp.h"
 #elif defined(ARDUINO_ARCH_ESP32)
   #include <WiFi.h>
+  #ifdef USE_ETHERNET
+  #include <ETH.h>
+  #endif
 #endif
 
 namespace NetworkUtils {

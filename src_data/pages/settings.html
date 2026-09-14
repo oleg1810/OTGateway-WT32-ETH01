@@ -25,6 +25,7 @@
               <option value="it">IT</option>
               <option value="nl">NL</option>
               <option value="ru">RU</option>
+              <option value="uk">UK</option>
             </select>
           </li>
         </ul>
@@ -1282,7 +1283,7 @@
         };
 
         try {
-          const response = await fetch("/static/timezones.json");
+          const response = await fetch("/static/timezones.json?{BUILD_TIME}");
           if (!response.ok) {
             throw new Error('Response not valid');
           }

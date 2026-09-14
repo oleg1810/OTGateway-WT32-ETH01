@@ -1,0 +1,17 @@
+diff --git a/lib/NetworkUtils/NetworkMgr.h b/lib/NetworkUtils/NetworkMgr.h
+index aadf3dd..b7919f1 100644
+--- a/lib/NetworkUtils/NetworkMgr.h
++++ b/lib/NetworkUtils/NetworkMgr.h
+@@ -165,8 +165,12 @@ namespace NetworkUtils {
+       #ifdef ARDUINO_ARCH_ESP8266
+       WiFi.setSleepMode(WIFI_NONE_SLEEP);
+       #elif defined(ARDUINO_ARCH_ESP32)
++      #ifdef FORCE_WIFI_PS_NONE
++      WiFi.setSleep(WIFI_PS_NONE);
++      #else
+       WiFi.setSleep(USE_BLE ? WIFI_PS_MIN_MODEM : WIFI_PS_NONE);
+       #endif
++      #endif
+ 
+       WiFi.softAPdisconnect();
+       #ifdef ARDUINO_ARCH_ESP8266

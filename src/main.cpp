@@ -13,6 +13,7 @@
 #include <TinyLogger.h>
 #include <NetworkMgr.h>
 #include "CrashRecorder.h"
+#include "BootLog.h"
 #include "Sensors.h"
 #include "Settings.h"
 #include "utils.h"
@@ -38,6 +39,7 @@ using namespace NetworkUtils;
 
 // Vars
 ESPTelnetStream* telnetStream = nullptr;
+BootLog bootLog(6144);
 NetworkMgr* network = nullptr;
 Sensors::Result sensorsResults[SENSORS_AMOUNT];
 
@@ -80,6 +82,7 @@ void setup() {
   Serial.setTxBufferSize(512);
   #endif
   Log.addStream(&Serial);
+  Log.addStream(&bootLog);
   Log.print("\n\n\r");
 
   //

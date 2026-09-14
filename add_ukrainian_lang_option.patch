@@ -1,0 +1,72 @@
+diff --git a/src_data/pages/dashboard.html b/src_data/pages/dashboard.html
+index ad5ae18..635ae12 100644
+--- a/src_data/pages/dashboard.html
++++ b/src_data/pages/dashboard.html
+@@ -25,6 +25,7 @@
+               <option value="it">IT</option>
+               <option value="nl">NL</option>
+               <option value="ru">RU</option>
++              <option value="uk">UK</option>
+             </select>
+           </li>
+         </ul>
+diff --git a/src_data/pages/index.html b/src_data/pages/index.html
+index 247d4bf..f222ea7 100644
+--- a/src_data/pages/index.html
++++ b/src_data/pages/index.html
+@@ -25,6 +25,7 @@
+               <option value="it">IT</option>
+               <option value="nl">NL</option>
+               <option value="ru">RU</option>
++              <option value="uk">UK</option>
+             </select>
+           </li>
+         </ul>
+diff --git a/src_data/pages/network.html b/src_data/pages/network.html
+index 526da15..9cf1dd5 100644
+--- a/src_data/pages/network.html
++++ b/src_data/pages/network.html
+@@ -25,6 +25,7 @@
+               <option value="it">IT</option>
+               <option value="nl">NL</option>
+               <option value="ru">RU</option>
++              <option value="uk">UK</option>
+             </select>
+           </li>
+         </ul>
+diff --git a/src_data/pages/sensors.html b/src_data/pages/sensors.html
+index 1e3a937..e86307f 100644
+--- a/src_data/pages/sensors.html
++++ b/src_data/pages/sensors.html
+@@ -25,6 +25,7 @@
+               <option value="it">IT</option>
+               <option value="nl">NL</option>
+               <option value="ru">RU</option>
++              <option value="uk">UK</option>
+             </select>
+           </li>
+         </ul>
+diff --git a/src_data/pages/settings.html b/src_data/pages/settings.html
+index b6c0e89..007b555 100644
+--- a/src_data/pages/settings.html
++++ b/src_data/pages/settings.html
+@@ -25,6 +25,7 @@
+               <option value="it">IT</option>
+               <option value="nl">NL</option>
+               <option value="ru">RU</option>
++              <option value="uk">UK</option>
+             </select>
+           </li>
+         </ul>
+diff --git a/src_data/pages/upgrade.html b/src_data/pages/upgrade.html
+index c62d91f..1a8d91f 100644
+--- a/src_data/pages/upgrade.html
++++ b/src_data/pages/upgrade.html
+@@ -25,6 +25,7 @@
+               <option value="it">IT</option>
+               <option value="nl">NL</option>
+               <option value="ru">RU</option>
++              <option value="uk">UK</option>
+             </select>
+           </li>
+         </ul>

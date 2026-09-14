@@ -1,5 +1,9 @@
 //#define PORTAL_CACHE "max-age=86400"
-#define PORTAL_CACHE nullptr
+#define PORTAL_CACHE "max-age=600"
+// /static assets are all referenced with a ?{BUILD_TIME} query string that
+// changes on every firmware build (see gulpfile.js), so it's safe to cache
+// them "forever" - a new build means a new URL, forcing a fresh fetch.
+#define STATIC_CACHE "public, max-age=31536000, immutable"
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
@@ -21,13 +25,14 @@ using namespace NetworkUtils;
 extern NetworkMgr* network;
 extern FileData fsNetworkSettings, fsSettings, fsSensorsSettings;
 extern MqttTask* tMqtt;
+extern BootLog bootLog;
 
 
 class PortalTask : public LeanTask {
 public:
   PortalTask(bool _enabled = false, unsigned long _interval = 0) : LeanTask(_enabled, _interval) {
     this->webServer = new WebServer(80);
-    this->bufferedWebServer = new BufferedWebServer(this->webServer, 32u);
+    this->bufferedWebServer = new BufferedWebServer(this->webServer, 512u);
     this->dnsServer = new DNSServer();
   }
 
@@ -408,6 +413,13 @@ protected:
         return this->webServer->send(401);
       }
 
+      #ifdef USE_ETHERNET
+      JsonDocument doc;
+      doc.to<JsonArray>();
+      return this->bufferedWebServer->send(200, F("application/json"), doc);
+      #endif
+
+      #ifndef USE_ETHERNET
       auto apCount = WiFi.scanComplete();
       if (apCount <= 0) {
         if (apCount != WIFI_SCAN_RUNNING) {
@@ -442,6 +454,7 @@ protected:
       this->bufferedWebServer->send(200, F("application/json"), doc);
 
       WiFi.scanDelete();
+      #endif
     });
 
 
@@ -763,6 +776,14 @@ protected:
       this->bufferedWebServer->send(200, F("application/json"), doc);
     });
 
+    this->webServer->on(F("/api/bootlog"), HTTP_GET, [this]() {
+      if (this->isAuthRequired() && !this->isValidCredentials()) {
+        return this->webServer->send(401);
+      }
+
+      this->webServer->send(200, F("text/plain"), bootLog.toString());
+    });
+
     this->webServer->on(F("/api/debug"), HTTP_GET, [this]() {
       JsonDocument doc;
 
@@ -883,7 +904,7 @@ protected:
 
     this->webServer->serveStatic("/robots.txt", LittleFS, "/static/robots.txt", PORTAL_CACHE);
     this->webServer->serveStatic("/favicon.ico", LittleFS, "/static/images/favicon.ico", PORTAL_CACHE);
-    this->webServer->serveStatic("/static", LittleFS, "/static", PORTAL_CACHE);
+    this->webServer->serveStatic("/static", LittleFS, "/static", STATIC_CACHE);
   }
 
   void loop() {
@@ -910,7 +931,7 @@ protected:
       ::optimistic_yield(1000);
       #endif
 
-    } else if (this->stateWebServer() && !network->isApEnabled() && !network->isStaEnabled()) {
+    } else if (this->stateWebServer() && !network->isApEnabled() && !network->isConnected()) {
       this->stopWebServer();
       Log.straceln(FPSTR(L_PORTAL_WEBSERVER), F("Stopped: AP and STA down"));
 

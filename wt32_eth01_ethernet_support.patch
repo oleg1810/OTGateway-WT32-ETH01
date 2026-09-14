@@ -1,0 +1,318 @@
+diff --git a/lib/NetworkUtils/NetworkConnection.cpp b/lib/NetworkUtils/NetworkConnection.cpp
+index 0f03b88..c4053d2 100644
+--- a/lib/NetworkUtils/NetworkConnection.cpp
++++ b/lib/NetworkUtils/NetworkConnection.cpp
+@@ -106,7 +106,29 @@ void NetworkConnection::onEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+       rawDisconnectReason = info.wifi_sta_disconnected.reason;
+       disconnectReason = convertDisconnectReason(info.wifi_sta_disconnected.reason);
+       break;
+-    
++
++    #ifdef USE_ETHERNET
++    case ARDUINO_EVENT_ETH_CONNECTED:
++      // link is up, waiting for DHCP (or already fine if static config)
++      status = useDhcp ? Status::CONNECTING : Status::CONNECTED;
++      rawDisconnectReason = 0;
++      disconnectReason = DisconnectReason::NONE;
++      break;
++
++    case ARDUINO_EVENT_ETH_GOT_IP:
++      status = Status::CONNECTED;
++      rawDisconnectReason = 0;
++      disconnectReason = DisconnectReason::NONE;
++      break;
++
++    case ARDUINO_EVENT_ETH_DISCONNECTED:
++    case ARDUINO_EVENT_ETH_STOP:
++      status = Status::DISCONNECTED;
++      rawDisconnectReason = 0;
++      disconnectReason = DisconnectReason::OTHER;
++      break;
++    #endif
++
+     default:
+       break;
+   }
+diff --git a/lib/NetworkUtils/NetworkConnection.h b/lib/NetworkUtils/NetworkConnection.h
+index 313d5e4..6e7dccc 100644
+--- a/lib/NetworkUtils/NetworkConnection.h
++++ b/lib/NetworkUtils/NetworkConnection.h
+@@ -3,6 +3,9 @@
+   #include "lwip/etharp.h"
+ #elif defined(ARDUINO_ARCH_ESP32)
+   #include <WiFi.h>
++  #ifdef USE_ETHERNET
++  #include <ETH.h>
++  #endif
+ #endif
+ 
+ namespace NetworkUtils {
+diff --git a/lib/NetworkUtils/NetworkMgr.h b/lib/NetworkUtils/NetworkMgr.h
+index aadf3dd..257f2b6 100644
+--- a/lib/NetworkUtils/NetworkMgr.h
++++ b/lib/NetworkUtils/NetworkMgr.h
+@@ -4,6 +4,9 @@
+ #elif defined(ARDUINO_ARCH_ESP32)
+ #include <WiFi.h>
+ #include <esp_wifi.h>
++#ifdef USE_ETHERNET
++#include <ETH.h>
++#endif
+ #endif
+ #include <NetworkConnection.h>
+ 
+@@ -77,15 +80,29 @@ namespace NetworkUtils {
+     }
+ 
+     bool hasStaCredentials() {
++      #ifdef USE_ETHERNET
++      // Ethernet has no "credentials" concept - cable presence + DHCP is all that's needed.
++      // Returning true keeps the existing STA/AP fallback state machine below working unmodified.
++      return true;
++      #else
+       return this->staSsid != nullptr;
++      #endif
+     }
+ 
+     bool isConnected() {
++      #ifdef USE_ETHERNET
++      return NetworkConnection::getStatus() == NetworkConnection::Status::CONNECTED;
++      #else
+       return this->isStaEnabled() && NetworkConnection::getStatus() == NetworkConnection::Status::CONNECTED;
++      #endif
+     }
+ 
+     bool isConnecting() {
++      #ifdef USE_ETHERNET
++      return NetworkConnection::getStatus() == NetworkConnection::Status::CONNECTING;
++      #else
+       return this->isStaEnabled() && NetworkConnection::getStatus() == NetworkConnection::Status::CONNECTING;
++      #endif
+     }
+ 
+     bool isStaEnabled() {
+@@ -105,7 +122,12 @@ namespace NetworkUtils {
+     }
+ 
+     short int getRssi() {
++      #ifdef USE_ETHERNET
++      // No radio signal on a wired link.
++      return 0;
++      #else
+       return WiFi.RSSI();
++      #endif
+     }
+ 
+     IPAddress getApIp() {
+@@ -113,23 +135,43 @@ namespace NetworkUtils {
+     }
+ 
+     IPAddress getStaIp() {
++      #ifdef USE_ETHERNET
++      return ETH.localIP();
++      #else
+       return WiFi.localIP();
++      #endif
+     }
+ 
+     IPAddress getStaSubnet() {
++      #ifdef USE_ETHERNET
++      return ETH.subnetMask();
++      #else
+       return WiFi.subnetMask();
++      #endif
+     }
+ 
+     IPAddress getStaGateway() {
++      #ifdef USE_ETHERNET
++      return ETH.gatewayIP();
++      #else
+       return WiFi.gatewayIP();
++      #endif
+     }
+ 
+     IPAddress getStaDns() {
++      #ifdef USE_ETHERNET
++      return ETH.dnsIP();
++      #else
+       return WiFi.dnsIP();
++      #endif
+     }
+ 
+     String getStaMac() {
++      #ifdef USE_ETHERNET
++      return ETH.macAddress();
++      #else
+       return WiFi.macAddress();
++      #endif
+     }
+ 
+     const char* getStaSsid() {
+@@ -165,8 +207,12 @@ namespace NetworkUtils {
+       #ifdef ARDUINO_ARCH_ESP8266
+       WiFi.setSleepMode(WIFI_NONE_SLEEP);
+       #elif defined(ARDUINO_ARCH_ESP32)
++      #ifdef FORCE_WIFI_PS_NONE
++      WiFi.setSleep(WIFI_PS_NONE);
++      #else
+       WiFi.setSleep(USE_BLE ? WIFI_PS_MIN_MODEM : WIFI_PS_NONE);
+       #endif
++      #endif
+ 
+       WiFi.softAPdisconnect();
+       #ifdef ARDUINO_ARCH_ESP8266
+@@ -186,12 +232,54 @@ namespace NetworkUtils {
+       
+       #if defined(ARDUINO_ARCH_ESP32) && ESP_ARDUINO_VERSION_MAJOR < 3
+       // Nothing. Because memory leaks when turn off WiFi on ESP32 SDK < 3.0.0
+-      return true;
++      bool result = true;
+       #else
+-      return WiFi.mode(WIFI_OFF);
++      bool result = WiFi.mode(WIFI_OFF);
+       #endif
++
++      #ifdef USE_ETHERNET
++      this->beginEthernet();
++      #endif
++
++      return result;
+     }
+ 
++    #ifdef USE_ETHERNET
++    /**
++     * @brief One-time bring-up of the RMII/LAN8720 Ethernet PHY.
++     * Board-specific pins below are fixed by the WT32-ETH01 hardware design
++     * (MDC=GPIO23, MDIO=GPIO18, PHY power/osc-enable=GPIO16, clock in on GPIO0).
++     * NOTE: verify this overload against the installed Arduino-ESP32 core version -
++     * the ETH.begin() signature has changed between major core releases.
++     */
++    void beginEthernet() {
++      if (this->ethStarted) {
++        return;
++      }
++
++      this->ethStarted = true;
++
++      ETH.begin(
++        ETH_PHY_LAN8720, // phy type
++        1,                // phy_addr
++        18,               // mdio
++        23,               // mdc
++        16,               // power/enable pin (external oscillator)
++        ETH_CLOCK_GPIO0_IN // 50MHz clock supplied externally into GPIO0
++      );
++
++      if (this->setWifiHostname(this->hostname)) {
++        Log.straceln(FPSTR(L_NETWORK), F("Set hostname '%s': success"), this->hostname);
++      } else {
++        Log.serrorln(FPSTR(L_NETWORK), F("Set hostname '%s': fail"), this->hostname);
++      }
++
++      if (!this->useDhcp) {
++        ETH.config(this->staticIp, this->staticGateway, this->staticSubnet, this->staticDns);
++      }
++    }
++    #endif
++
+     void reconnect() {
+       this->reconnectFlag = true;
+     }
+@@ -221,6 +309,7 @@ namespace NetworkUtils {
+ 
+       this->delayCallback(250);
+ 
++      #ifndef USE_ETHERNET
+       #ifdef ARDUINO_ARCH_ESP32
+       if (this->setWifiHostname(this->hostname)) {
+         Log.straceln(FPSTR(L_NETWORK), F("Set hostname '%s': success"), this->hostname);
+@@ -260,6 +349,10 @@ namespace NetworkUtils {
+       } else {
+         WiFi.begin(this->staSsid, this->staPassword, this->staChannel, nullptr, true);
+       }
++      #endif
++      // USA_ETHERNET builds fall straight through to the wait loop below:
++      // ETH.begin() already happened once in resetWifi()/beginEthernet(),
++      // there's no per-attempt "begin" call for a wired link, only a link+DHCP wait.
+ 
+       unsigned long beginConnectionTime = millis();
+       while (millis() - beginConnectionTime < timeout) {
+@@ -275,6 +368,11 @@ namespace NetworkUtils {
+     }
+ 
+     void disconnect() {
++      #ifdef USE_ETHERNET
++      // No meaningful "disconnect" for a wired link - the state machine
++      // above will just keep waiting for link/DHCP again.
++      return;
++      #endif
+       #ifdef ARDUINO_ARCH_ESP32
+       WiFi.disconnectAsync(false, true);
+ 
+@@ -312,8 +410,8 @@ namespace NetworkUtils {
+             FPSTR(L_NETWORK),
+             F("Connected, downtime: %lu s., IP: %s, RSSI: %hhd"),
+             (millis() - this->disconnectedTime) / 1000,
+-            WiFi.localIP().toString().c_str(),
+-            WiFi.RSSI()
++            this->getStaIp().toString().c_str(),
++            this->getRssi()
+           );
+         }
+ 
+@@ -411,6 +509,9 @@ namespace NetworkUtils {
+ 
+     bool connected = false;
+     bool reconnectFlag = false;
++    #ifdef USE_ETHERNET
++    bool ethStarted = false;
++    #endif
+     unsigned long prevArpGratuitous = 0;
+     unsigned long prevReconnectingTime = 0;
+     unsigned long connectedTime = 0;
+@@ -422,11 +523,19 @@ namespace NetworkUtils {
+         return false;
+       }
+ 
++      #ifdef USE_ETHERNET
++      if (strcmp(ETH.getHostname(), hostname) == 0) {
++        return true;
++      }
++
++      return ETH.setHostname(hostname);
++      #else
+       if (strcmp(WiFi.getHostname(), hostname) == 0) {
+         return true;
+       }
+ 
+       return WiFi.setHostname(hostname);
++      #endif
+     }
+ 
+     #ifdef ARDUINO_ARCH_ESP8266
+diff --git a/src/PortalTask.h b/src/PortalTask.h
+index 662e0e5..8d88efc 100644
+--- a/src/PortalTask.h
++++ b/src/PortalTask.h
+@@ -408,6 +408,13 @@ protected:
+         return this->webServer->send(401);
+       }
+ 
++      #ifdef USE_ETHERNET
++      // Wired build - no WiFi networks to offer in the setup wizard.
++      JsonDocument doc;
++      this->bufferedWebServer->send(200, F("application/json"), doc);
++      return;
++      #else
++
+       auto apCount = WiFi.scanComplete();
+       if (apCount <= 0) {
+         if (apCount != WIFI_SCAN_RUNNING) {
+@@ -442,6 +449,7 @@ protected:
+       this->bufferedWebServer->send(200, F("application/json"), doc);
+ 
+       WiFi.scanDelete();
++      #endif
+     });
+ 
+ 
