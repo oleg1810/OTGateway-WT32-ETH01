@@ -13,10 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // The logo is decorative, not a navigation link. Direct page navigation is below it.
-  const logoLink = header.querySelector(':not(.portal-page-nav) a[href="/"]');
-  if (logoLink) {
+  // Turn the old text badge into a compact, non-clickable wordmark.
+  const logoLink = header.querySelector('nav:first-child a[href="/"]');
+  const logo = logoLink?.querySelector('.logo');
+  if (logo) {
     logoLink.removeAttribute('href');
+    logo.removeAttribute('data-i18n');
+    logo.innerHTML = '<span class="portal-logo-mark">OT</span><span class="portal-logo-name">Gateway</span>';
   }
 
   const nav = document.createElement('nav');
@@ -67,25 +70,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const style = document.createElement('style');
   style.textContent = `
+    header.container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header.container > nav:first-child {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+    header.container > nav:first-child > ul {
+      margin: 0;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      color: var(--pico-color);
+      font-family: inherit;
+      font-size: 1.2rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .portal-logo-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: 0.55rem;
+      font-family: var(--pico-font-family-monospace);
+      font-size: 0.82rem;
+      line-height: 1;
+      letter-spacing: -0.06em;
+    }
+    .portal-logo-name {
+      letter-spacing: -0.02em;
+    }
     .portal-page-nav {
-      margin: 0 0 1rem;
+      flex: 1 1 auto;
+      margin: 0;
     }
     .portal-page-nav ul {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.5rem;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.4rem;
       padding: 0;
       margin: 0;
       list-style: none;
     }
     .portal-page-nav li {
       margin: 0;
+      padding: 0;
     }
     .portal-page-nav a[role="button"] {
       margin: 0;
-      padding: 0.45rem 0.8rem;
-      font-size: 0.9rem;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.88rem;
       white-space: nowrap;
     }
     .portal-page-nav .portal-nav-short {
@@ -93,9 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     .portal-page-nav-lang select {
       margin: 0;
-      padding: 0.45rem 0.7rem;
+      padding: 0.4rem 0.6rem;
       height: auto;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
     html[lang="uk"] .portal-page-nav .portal-nav-full {
       display: none;
@@ -104,15 +150,24 @@ document.addEventListener('DOMContentLoaded', () => {
       display: inline;
     }
     @media (max-width: 700px) {
+      header.container {
+        display: block;
+        text-align: center;
+      }
+      header.container > nav:first-child {
+        margin-bottom: 0.45rem;
+      }
       .portal-page-nav ul {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: center;
+        gap: 0.25rem;
       }
       .portal-page-nav a[role="button"],
       .portal-page-nav-lang select {
-        display: block;
-        width: 100%;
+        display: inline-block;
+        width: auto;
         text-align: center;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.82rem;
       }
     }
   `;
