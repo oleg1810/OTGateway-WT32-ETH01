@@ -70,12 +70,12 @@ const portalHeader = `
       </div>
       <nav class="portal-page-nav" aria-label="Portal navigation">
         <ul>
-          <li><a href="/" data-i18n>index.title</a></li>
-          <li><a href="/dashboard.html" data-i18n>dashboard.name</a></li>
-          <li><a href="/network.html" data-i18n>network.name</a></li>
-          <li><a href="/settings.html" data-i18n>settings.name</a></li>
-          <li><a href="/sensors.html" data-i18n>sensors.name</a></li>
-          <li><a href="/upgrade.html" data-i18n>upgrade.name</a></li>
+          <li><a href="/">Main</a></li>
+          <li><a href="/dashboard.html">Panel</a></li>
+          <li><a href="/network.html">Network</a></li>
+          <li><a href="/settings.html">Settings</a></li>
+          <li><a href="/sensors.html">Sensors</a></li>
+          <li><a href="/upgrade.html">Update</a></li>
           <li class="portal-page-nav-lang">
             <select id="lang" aria-label="Lang">
               <option value="en" selected>EN</option>
