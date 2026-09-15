@@ -36,6 +36,57 @@
       <article>
         <div>
           <hgroup>
+            <h2 data-i18n>index.section.network</h2>
+            <p></p>
+          </hgroup>
+
+          <div id="main-busy" aria-busy="true"></div>
+          <table id="main-table" class="hidden">
+            <tbody>
+              <tr>
+                <th scope="row" data-i18n>network.params.hostname</th>
+                <td><b id="network-hostname"></b></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.params.mac</th>
+                <td><b id="network-mac"></b></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.wifi.connected</th>
+                <td><i id="network-connected"></i></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.wifi.ssid</th>
+                <td><b id="network-ssid"></b></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.wifi.signal</th>
+                <td><b id="network-signal"></b> %</td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.params.ip</th>
+                <td><b id="network-ip"></b></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.params.subnet</th>
+                <td><b id="network-subnet"></b></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.params.gateway</th>
+                <td><b id="network-gateway"></b></td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n>network.params.dns</th>
+                <td><b id="network-dns"></b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article>
+        <div>
+          <hgroup>
             <h2 data-i18n>network.name</h2>
             <p></p>
           </hgroup>
@@ -181,6 +232,39 @@
       document.addEventListener('DOMContentLoaded', async () => {
         const lang = new Lang(document.getElementById('lang'));
         await lang.build();
+
+        // Network status table - fetched once, doesn't change on its own
+        // (unlike WiFi RSSI, these values only change after an explicit
+        // settings save or reconnect, both already visible another way).
+        try {
+          const response = await fetch("/api/info", {
+            cache: "no-cache",
+            credentials: "include"
+          });
+
+          if (!response.ok) {
+            throw new Error('Response not valid');
+          }
+
+          const result = await response.json();
+          setValue('#network-hostname', result.network.hostname);
+          setValue('#network-mac', result.network.mac);
+          setStatus(
+            '#network-connected',
+            result.network.connected ? "success" : "error",
+            result.network.connected ? "green" : "red"
+          );
+          setValue('#network-ssid', result.network.ssid);
+          setValue('#network-signal', result.network.signalQuality);
+          setValue('#network-ip', result.network.ip);
+          setValue('#network-subnet', result.network.subnet);
+          setValue('#network-gateway', result.network.gateway);
+          setValue('#network-dns', result.network.dns);
+          setBusy('#main-busy', '#main-table', false);
+
+        } catch (error) {
+          console.log(error);
+        }
 
         const fillData = (data) => {
           setInputValue("[name='hostname']", data.hostname);
