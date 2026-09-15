@@ -426,7 +426,7 @@ protected:
           #ifdef ARDUINO_ARCH_ESP8266
           WiFi.scanNetworks(true, true);
           #else
-          WiFi.scanNetworks(true, true, true);
+          WiFi.scanNetworks(true, false, false, 120);
           #endif
         }
         
