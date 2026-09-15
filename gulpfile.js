@@ -26,8 +26,7 @@ let paths = {
       'app.js': [
         'src_data/scripts/i18n.min.js',
         'src_data/scripts/lang.js',
-        'src_data/scripts/utils.js',
-        'src_data/scripts/nav.js'
+        'src_data/scripts/utils.js'
       ],
       'chart.js': [
         'src_data/scripts/chart.js'
