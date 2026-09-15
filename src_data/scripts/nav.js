@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const shortLabel = document.createElement('span');
 
     link.href = path;
-    link.setAttribute('role', 'button');
 
     fullLabel.setAttribute('data-i18n', key);
     fullLabel.className = 'portal-nav-full';
@@ -128,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
       margin: 0;
       padding: 0;
     }
-    .portal-page-nav a[role="button"] {
+    .portal-page-nav a {
       margin: 0;
       padding: 0.4rem 0.7rem;
       font-size: 0.88rem;
@@ -161,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         justify-content: center;
         gap: 0.25rem;
       }
-      .portal-page-nav a[role="button"],
+      .portal-page-nav a,
       .portal-page-nav-lang select {
         display: inline-block;
         width: auto;
