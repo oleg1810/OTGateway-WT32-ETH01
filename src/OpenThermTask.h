@@ -45,6 +45,10 @@ protected:
   int getTaskPriority() override {
     return 5;
   }
+
+  uint32_t getTaskStackSize() override {
+    return 4096;
+  }
   #endif
 
   void setup() {

@@ -104,6 +104,10 @@ protected:
   int getTaskPriority() override {
     return 2;
   }
+
+  uint32_t getTaskStackSize() override {
+    return 4608;
+  }
   #endif
 
   inline bool isReadyForSend() {
