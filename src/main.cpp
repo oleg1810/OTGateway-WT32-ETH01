@@ -32,8 +32,8 @@
 #include "OpenThermTask.h"
 #include "SensorsTask.h"
 #include "RegulatorTask.h"
-#include "PortalTask.h"
 #include "MainTask.h"
+#include "PortalTask.h"
 
 using namespace NetworkUtils;
 
