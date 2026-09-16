@@ -114,9 +114,7 @@ protected:
     if (network->isConnected()) {
       if (!this->ntpStarted) {
         if (strlen(settings.system.ntp.server)) {
-          configTime(0, 0, settings.system.ntp.server);
-          setenv("TZ", settings.system.ntp.timezone, 1);
-          tzset();
+          configTzTime(settings.system.ntp.timezone, settings.system.ntp.server);
 
           this->ntpStarted = true;
         }
@@ -218,14 +216,18 @@ protected:
 
     size_t minFreeHeap = getFreeHeap(true);
     size_t minFreeHeapDiff = 0;
-    if (minFreeHeap < this->minFreeHeap || this->minFreeHeap == 0) {
+    if (this->minFreeHeap == 0) {
+      this->minFreeHeap = minFreeHeap;
+    } else if (minFreeHeap < this->minFreeHeap) {
       minFreeHeapDiff = this->minFreeHeap - minFreeHeap;
       this->minFreeHeap = minFreeHeap;
     }
     
     size_t minMaxFreeBlockHeap = getMaxFreeBlockHeap(true);
     size_t minMaxFreeBlockHeapDiff = 0;
-    if (minMaxFreeBlockHeap < this->minMaxFreeBlockHeap || this->minMaxFreeBlockHeap == 0) {
+    if (this->minMaxFreeBlockHeap == 0) {
+      this->minMaxFreeBlockHeap = minMaxFreeBlockHeap;
+    } else if (minMaxFreeBlockHeap < this->minMaxFreeBlockHeap) {
       minMaxFreeBlockHeapDiff = this->minMaxFreeBlockHeap - minMaxFreeBlockHeap;
       this->minMaxFreeBlockHeap = minMaxFreeBlockHeap;
     }
