@@ -32,6 +32,8 @@ protected:
     return 4096;
   }
   #endif
+
+   void loop() {
     if (vars.states.restarting || vars.states.upgrading) {
       return;
     }
