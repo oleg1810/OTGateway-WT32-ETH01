@@ -106,7 +106,7 @@ protected:
   }
 
   uint32_t getTaskStackSize() override {
-    return 3072;
+    return 4096;
   }
   #endif
 
