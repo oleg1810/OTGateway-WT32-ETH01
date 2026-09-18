@@ -27,9 +27,13 @@ protected:
   int getTaskPriority() override {
     return 4;
   }
+
+  uint32_t getTaskStackSize() override {
+    return 4096;
+  }
   #endif
-  
-  void loop() {
+
+   void loop() {
     if (vars.states.restarting || vars.states.upgrading) {
       return;
     }

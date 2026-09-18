@@ -104,6 +104,10 @@ protected:
   int getTaskPriority() override {
     return 4;
   }
+
+  uint32_t getTaskStackSize() override {
+    return 4096;
+  }
   #endif
 
   void loop() {

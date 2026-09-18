@@ -253,7 +253,7 @@ const setupNetworkScanForm = (formSelector, tableSelector) => {
   };
 
   form.addEventListener('submit', onSubmitFn);
-  onSubmitFn();
+  
 }
 
 const setupRestoreBackupForm = (formSelector) => {

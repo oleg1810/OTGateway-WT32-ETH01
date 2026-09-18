@@ -25,6 +25,10 @@ using namespace NetworkUtils;
 extern NetworkMgr* network;
 extern FileData fsNetworkSettings, fsSettings, fsSensorsSettings;
 extern MqttTask* tMqtt;
+extern OpenThermTask* tOt;
+extern SensorsTask* tSensors;
+extern RegulatorTask* tRegulator;
+extern MainTask* tMain;
 extern BootLog bootLog;
 
 
@@ -73,6 +77,10 @@ protected:
 
   int getTaskPriority() override {
     return 1;
+  }
+
+  uint32_t getTaskStackSize() override {
+    return 5120;
   }
   #endif
 
@@ -782,6 +790,35 @@ protected:
       }
 
       this->webServer->send(200, F("text/plain"), bootLog.toString());
+    });
+
+    this->webServer->on(F("/api/tasks"), HTTP_GET, [this]() {
+      if (this->isAuthRequired() && !this->isValidCredentials()) {
+        return this->webServer->send(401);
+      }
+
+      JsonDocument doc;
+
+      auto addTask = [&doc](const char* name, TaskHandle_t handle) {
+        auto obj = doc[name].to<JsonObject>();
+        if (handle == nullptr) {
+          obj["status"] = "not running";
+          return;
+        }
+        // High water mark = the closest the stack ever came to overflowing.
+        // Value is in words on some ports; on ESP32/FreeRTOS it's bytes.
+        obj["stackHighWaterMark"] = uxTaskGetStackHighWaterMark(handle);
+      };
+
+      addTask("mqtt", tMqtt ? tMqtt->getHandle() : nullptr);
+      addTask("openTherm", tOt ? tOt->getHandle() : nullptr);
+      addTask("sensors", tSensors ? tSensors->getHandle() : nullptr);
+      addTask("regulator", tRegulator ? tRegulator->getHandle() : nullptr);
+      addTask("portal", this->getHandle());
+      addTask("main", tMain ? tMain->getHandle() : nullptr);
+
+      doc.shrinkToFit();
+      this->bufferedWebServer->send(200, F("application/json"), doc);
     });
 
     this->webServer->on(F("/api/debug"), HTTP_GET, [this]() {
