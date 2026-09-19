@@ -470,6 +470,15 @@ namespace NetworkUtils {
         } else if (!this->isApEnabled() && millis() - this->disconnectedTime > this->failedConnectTimeout) {
           Log.sinfoln(FPSTR(L_NETWORK), F("Disconnected for a long time, start AP"));
 
+          #ifdef USE_ETHERNET
+          // The PHY may never have linked at all (e.g. bad cable contact at
+          // boot) - ETH.begin() only ever runs once via the ethStarted guard,
+          // so without this, a link that recovers later is never retried.
+          // Force a fresh attempt alongside the WiFi AP fallback below.
+          this->ethStarted = false;
+          this->beginEthernet();
+          #endif
+
           WiFi.mode(WIFI_AP_STA);
           this->delayCallback(250);
           WiFi.softAP(this->apName, this->apPassword, this->apChannel);
