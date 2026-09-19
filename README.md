@@ -12,7 +12,7 @@ The purpose of this fork is to test hardware-specific adaptations and stability 
 | **ESP32-S3 N16R8** | `s3_mini_n16r8` | Modern dual-core target; stability testing |
 | **WT32-ETH01** | `wt32_eth01` | Modern dual-core Ethernet target |
 
-The project deliberately does **not** try to make one set of resource parameters fit every ESP32 board. Board-specific PlatformIO environments are used where hardware capabilities differ.
+The project deliberately does **not** try to make one set of resource parameters fit every ESP32 board. Board-specific PlatformIO environments are used where hardware capabilities differ. The measured task-stack tuning is currently enabled only for the resource-constrained ESP32-S2 target; ESP32-S3 N16R8 and WT32-ETH01 use the upstream 10 KB task-stack allocation.
 
 ## Upstream project
 
@@ -29,7 +29,7 @@ Use the upstream repository and wiki for the original feature set, boiler compat
 ## Experimental changes in this fork
 
 - **Static portal navigation:** portal page navigation is generated at build time instead of being created by the runtime navigation script. This removes the runtime `nav.js` navigation path that was associated with stability problems on the ESP32-S2.
-- **Board-specific task stack sizing:** ESP32 task stacks are reduced or adjusted using measured stack high-water marks rather than relying on the original common allocation.
+- **Board-specific task stack sizing:** the ESP32-S2 build uses reduced task stacks based on measured stack high-water marks. The ESP32-S3 N16R8 and WT32-ETH01 builds retain the upstream 10 KB task-stack allocation.
 - **Local ESP32Scheduler copy:** the fork keeps a local scheduler copy so task handles can be inspected without changing the scheduler API used by the application.
 - **Runtime diagnostics:** additional HTTP endpoints expose system and task information useful for hardware and stability testing.
 - **Board-specific build environments:** S2, S3 N16R8, and WT32-ETH01 configurations are maintained separately in `platformio.ini`.
