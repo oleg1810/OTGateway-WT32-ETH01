@@ -1,58 +1,83 @@
-# OTGateway — experimental hardware branch
+# OTGateway — experimental hardware fork
 
 This repository is an **experimental fork of [Laxilef/OTGateway](https://github.com/Laxilef/OTGateway)**.
 
-It is **not a new or independently developed OpenTherm gateway project**. The application, most of the source code, web interface, documentation concept, and core functionality originate from the upstream OTGateway project.
+It is **not an independently developed OpenTherm gateway project**. The application, core functionality, most of the source code, and the original web interface originate from the upstream OTGateway project.
 
-The purpose of this repository is to experiment with hardware-specific adaptations and stability improvements for three boards:
+The purpose of this fork is to test hardware-specific adaptations and stability improvements on three ESP32 boards:
 
-| Hardware | PlatformIO environment | Focus |
+| Board | PlatformIO environment | Status / purpose |
 |---|---|---|
-| **Lolin S2 Mini (ESP32-S2)** | s2_mini | Reduced task stack sizes, portal stability, runtime diagnostics |
-| **ESP32-S3 N16R8** | s3_mini_n16r8 | S3/N16R8 adaptation and stability testing |
-| **WT32-ETH01 (ESP32 + Ethernet)** | wt32_eth01 | Ethernet-based OTGateway hardware |
+| **Lolin S2 Mini (ESP32-S2)** | `s2_mini` | Legacy/experimental target; resource-constrained platform |
+| **ESP32-S3 N16R8** | `s3_mini_n16r8` | Modern dual-core target; stability testing |
+| **WT32-ETH01** | `wt32_eth01` | Modern dual-core Ethernet target |
 
-Additional PlatformIO environments are retained where useful for experiments and comparison, but the three boards above are the scope of this fork.
+The project deliberately does **not** try to make one set of resource parameters fit every ESP32 board. Board-specific PlatformIO environments are used where hardware capabilities differ.
 
 ## Upstream project
 
 **Original project:** [Laxilef/OTGateway](https://github.com/Laxilef/OTGateway)
 
-**Upstream release baseline:** OTGateway 1.6.0
+**Upstream baseline:** OTGateway 1.6.0
 
-Please refer to the upstream project for the original feature set, supported boilers, configuration details, OpenTherm information, and general documentation:
+Use the upstream repository and wiki for the original feature set, boiler compatibility, configuration, OpenTherm documentation, and general instructions:
 
 - [OTGateway repository](https://github.com/Laxilef/OTGateway)
 - [OTGateway Wiki](https://github.com/Laxilef/OTGateway/wiki)
 - [Compatibility](https://github.com/Laxilef/OTGateway/wiki/Compatibility)
 
-## Experimental changes
+## Experimental changes in this fork
 
-The current work in this repository includes, among other things:
+- **Static portal navigation:** portal page navigation is generated at build time instead of being created by the runtime navigation script. This removes the runtime `nav.js` navigation path that was associated with stability problems on the ESP32-S2.
+- **Board-specific task stack sizing:** ESP32 task stacks are reduced or adjusted using measured stack high-water marks rather than relying on the original common allocation.
+- **Local ESP32Scheduler copy:** the fork keeps a local scheduler copy so task handles can be inspected without changing the scheduler API used by the application.
+- **Runtime diagnostics:** additional HTTP endpoints expose system and task information useful for hardware and stability testing.
+- **Board-specific build environments:** S2, S3 N16R8, and WT32-ETH01 configurations are maintained separately in `platformio.ini`.
 
-- **Static portal navigation** generated at build time instead of runtime DOM-generated navigation. The runtime navigation script path was removed after stability problems were observed on the ESP32-S2.
-- **Local ESP32Scheduler copy** with access to FreeRTOS task handles for diagnostics.
-- **Board-specific task stack sizing** based on measured stack high-water marks rather than the original one-size-fits-all allocation.
-- Diagnostic endpoints such as /api/debug and /api/tasks used during hardware and stability testing.
-- PlatformIO configurations for the three target hardware families and additional experimental S3 variants.
+These changes are experimental and are **not part of the official upstream OTGateway project** unless they are accepted upstream.
 
-These changes are experimental. They should not be considered part of the official upstream OTGateway project unless they are later accepted upstream.
+## Additional diagnostics
 
-## Current test status
+The experimental branch adds diagnostic information intended primarily for development and hardware testing.
 
-The branch is being tested on real hardware rather than treated as a finished release.
+`/api/debug` can report:
 
-For example, the ESP32-S3 N16R8 s3_mini_n16r8_noble test build recently produced two consecutive 200-packet ping runs with:
+- firmware version, build date and PlatformIO environment;
+- Arduino core and ESP-IDF SDK versions;
+- total heap, current free heap, minimum free heap, largest free block, and minimum largest free block;
+- chip model, revision, core count and CPU frequency;
+- flash size;
+- stored crash/reset information and backtrace data when a previous abnormal reset was recorded.
 
-- **0% packet loss**
-- average RTT **2.62 ms** and **2.65 ms**
-- maximum RTT **11.42 ms** and **21.00 ms**
+`/api/tasks` reports the **stack high-water mark** for the MQTT, OpenTherm, Sensors, Regulator, Portal and Main tasks. This is used to size task stacks from measurements rather than guesswork.
 
-Other boards are tested separately with their corresponding hardware configurations.
+`/api/bootlog` exposes the retained boot log through the web interface.
+
+These endpoints are intended as diagnostic tools and are not part of the upstream OTGateway interface.
+
+## Hardware notes
+
+### ESP32-S2
+
+ESP32-S2 is a **single-core** platform and different S2 Mini variants have different memory configurations. In Espressif's part-numbering, **ESP32-S2FN4R2 has 4 MB embedded flash and 2 MB embedded PSRAM**, while ESP32-S2FH4 has 4 MB flash and no embedded PSRAM. This distinction can materially affect available RAM and web-interface stability.
+
+### ESP32-S3 N16R8
+
+This is one of the modern dual-core targets of the fork. The N16R8 configuration uses 16 MB flash and is tested separately from the S2 configuration.
+
+### WT32-ETH01
+
+WT32-ETH01 is used here as an **Ethernet target**. The current `wt32_eth01` environment does not change the upstream web interface or apply the experimental memory reductions used during S2/S3 testing.
+
+## Current development status
+
+The project is tested on physical hardware. Stability work is performed by changing one relevant variable at a time and checking long-running operation, network behaviour, heap headroom, task stack headroom, and reset information.
+
+For WT32-ETH01, the current priority is hardware stability testing before making further firmware changes. In particular, DS18B20 wiring is treated separately from firmware behaviour.
 
 ## Building
 
-This is a PlatformIO project. Select the appropriate environment from platformio.ini.
+PlatformIO environments for the three target boards are:
 
 ```text
 pio run -e s2_mini
@@ -60,10 +85,14 @@ pio run -e s3_mini_n16r8
 pio run -e wt32_eth01
 ```
 
-Experimental S3 variants are also available in platformio.ini.
+Additional experimental S3 environments are also present in `platformio.ini`.
 
 ## Attribution
 
-This repository is based on the work of **Laxilef and the OTGateway contributors**. Please see the upstream project and its documentation for the original project and contributor information.
+This repository is based on the work of **Laxilef and the OTGateway contributors**.
 
-The project also uses third-party libraries and components listed in the upstream OTGateway documentation and source tree.
+Third-party libraries and components are also used; see the upstream project and source tree for the relevant licenses and attribution.
+
+## License
+
+This fork is intended to remain under the **GNU GPL v3** license of the upstream OTGateway project. See the upstream repository for the canonical license text.
