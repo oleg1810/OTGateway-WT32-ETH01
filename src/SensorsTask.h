@@ -105,9 +105,11 @@ protected:
     return 4;
   }
 
+  #ifdef OTGATEWAY_TUNED_STACKS
   uint32_t getTaskStackSize() override {
     return 4096;
   }
+  #endif
   #endif
 
   void loop() {
