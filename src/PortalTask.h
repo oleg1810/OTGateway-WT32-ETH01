@@ -866,6 +866,14 @@ protected:
       docChip[FPSTR(S_FREQ)] = 0;
       #endif
 
+      #if defined(ARDUINO_ARCH_ESP32)
+      auto docPsram = doc["psram"].to<JsonObject>();
+      docPsram["size"] = ESP.getPsramSize();
+      docPsram["free"] = ESP.getFreePsram();
+      docPsram["minFree"] = ESP.getMinFreePsram();
+      docPsram["maxAlloc"] = ESP.getMaxAllocPsram();
+      #endif
+
       auto docFlash = doc[FPSTR(S_FLASH)].to<JsonObject>();
       #ifdef ARDUINO_ARCH_ESP8266
       docFlash[FPSTR(S_SIZE)] = ESP.getFlashChipSize();
