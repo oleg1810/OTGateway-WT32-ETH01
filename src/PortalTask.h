@@ -79,9 +79,11 @@ protected:
     return 1;
   }
 
+  #ifdef OTGATEWAY_TUNED_STACKS
   uint32_t getTaskStackSize() override {
     return 5120;
   }
+  #endif
   #endif
 
   void setup() {
