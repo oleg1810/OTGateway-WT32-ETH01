@@ -259,6 +259,8 @@ namespace NetworkUtils {
 
       this->ethStarted = true;
 
+      delay(300);
+
       ETH.begin(
         ETH_PHY_LAN8720,    // phy type
         1,                  // phy_addr
