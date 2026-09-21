@@ -69,6 +69,12 @@ This is one of the modern dual-core targets of the fork. The N16R8 configuration
 
 WT32-ETH01 is used here as an **Ethernet target**. The current `wt32_eth01` environment does not change the upstream web interface or apply the experimental memory reductions used during S2/S3 testing.
 
+For reliable startup, use a **stable 5 V power supply with adequate current headroom**. During hardware testing, a **5 V / 2 A supply** gave reliable startup and is preferred over marginal USB-TTL or weak supplies.
+
+Ethernet initialization is deliberately delayed by **300 ms** before calling `ETH.begin()`. This follows the startup approach used by the current ESPHome Ethernet component, which inserts a 300 ms delay to allow power to stabilize before Ethernet initialization.
+
+On WT32-ETH01 this delay is particularly relevant because Ethernet initialization starts the LAN8720/RMII subsystem and its associated clock/PHY activity. The delay is intended to improve cold-start reliability; it does not change normal Ethernet operation after startup.
+
 ## Current development status
 
 The project is tested on physical hardware. Stability work is performed by changing one relevant variable at a time and checking long-running operation, network behaviour, heap headroom, task stack headroom, and reset information.
