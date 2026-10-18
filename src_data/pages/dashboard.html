@@ -50,6 +50,22 @@
                   <div class="thermostat-temp-target"><span class="targetTemp"></span> <span class="tempUnit"></span></div>
                   <div class="thermostat-temp-current"><span data-i18n>dashboard.thermostat.temp.current</span>: <span id="tHeatCurrentTemp"></span> <span class="tempUnit"></span></div>
                 </div>
+                <div class="heating-schedule" style="margin:.75rem 0;">
+                  <label>
+                    <input type="checkbox" id="scheduleEnabled" value="true">
+                    <span data-i18n>dashboard.schedule.enabled</span>
+                  </label>
+                  <details>
+                    <summary data-i18n>dashboard.schedule.times</summary>
+                    <div class="grid">
+                      <label><span data-i18n>dashboard.schedule.start1</span><input class="scheduleTime" id="scheduleStart1" type="time" required></label>
+                      <label><span data-i18n>dashboard.schedule.end1</span><input class="scheduleTime" id="scheduleEnd1" type="time" required></label>
+                      <label><span data-i18n>dashboard.schedule.start2</span><input class="scheduleTime" id="scheduleStart2" type="time" required></label>
+                      <label><span data-i18n>dashboard.schedule.end2</span><input class="scheduleTime" id="scheduleEnd2" type="time" required></label>
+                    </div>
+                  </details>
+                  <small><span data-i18n>dashboard.schedule.command</span>: <b id="heating-command-state">—</b></small>
+                </div>
                 <div class="thermostat-minus">
                   <button class="tAction outline" data-action="decrement"><i class="icons-down"></i></button>
                 </div>
@@ -313,9 +329,10 @@
       let prevSettings;
       let newSettings = {
         heating: {
-          enable: false,
+          enabled: false,
           turbo: false,
-          target: 0
+          target: 0,
+          schedule: { enabled: false, start1Hour: 6, start1Minute: 0, end1Hour: 9, end1Minute: 0, start2Hour: 16, start2Minute: 0, end2Hour: 22, end2Minute: 0 }
         },
         dhw: {
           enable: false,
@@ -395,6 +412,27 @@
         document.querySelector('#tHeatEnabled').addEventListener('change', (event) => {
           modifiedTime = Date.now();
           newSettings.heating.enabled = event.currentTarget.checked;
+        });
+
+        document.querySelector('#scheduleEnabled').addEventListener('change', (event) => {
+          modifiedTime = Date.now();
+          newSettings.heating.schedule.enabled = event.currentTarget.checked;
+        });
+
+        const scheduleFields = {
+          scheduleStart1: ['start1Hour', 'start1Minute'],
+          scheduleEnd1: ['end1Hour', 'end1Minute'],
+          scheduleStart2: ['start2Hour', 'start2Minute'],
+          scheduleEnd2: ['end2Hour', 'end2Minute']
+        };
+        Object.entries(scheduleFields).forEach(([id, keys]) => {
+          document.getElementById(id).addEventListener('change', (event) => {
+            const [hour, minute] = event.currentTarget.value.split(':').map(Number);
+            if (!Number.isInteger(hour) || !Number.isInteger(minute)) return;
+            newSettings.heating.schedule[keys[0]] = hour;
+            newSettings.heating.schedule[keys[1]] = minute;
+            modifiedTime = Date.now();
+          });
         });
 
         document.querySelector('#tHeatTurbo').addEventListener('change', (event) => {
@@ -479,6 +517,7 @@
               (prevSettings.heating.enabled != newSettings.heating.enabled)
               || (prevSettings.heating.turbo != newSettings.heating.turbo)
               || (prevSettings.heating.target != newSettings.heating.target)
+              || JSON.stringify(prevSettings.heating.schedule) != JSON.stringify(newSettings.heating.schedule)
               || (prevSettings.opentherm.options.dhwSupport && prevSettings.dhw.enabled != newSettings.dhw.enabled)
               || (prevSettings.opentherm.options.dhwSupport && prevSettings.dhw.target != newSettings.dhw.target)
             );
@@ -509,6 +548,13 @@
             newSettings.heating.enabled = result.heating.enabled;
             newSettings.heating.turbo = result.heating.turbo;
             newSettings.heating.target = result.heating.target;
+            newSettings.heating.schedule = result.heating.schedule;
+            setCheckboxValue('#scheduleEnabled', result.heating.schedule.enabled);
+            const timeValue = (h, m) => String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            document.getElementById('scheduleStart1').value = timeValue(result.heating.schedule.start1Hour, result.heating.schedule.start1Minute);
+            document.getElementById('scheduleEnd1').value = timeValue(result.heating.schedule.end1Hour, result.heating.schedule.end1Minute);
+            document.getElementById('scheduleStart2').value = timeValue(result.heating.schedule.start2Hour, result.heating.schedule.start2Minute);
+            document.getElementById('scheduleEnd2').value = timeValue(result.heating.schedule.end2Hour, result.heating.schedule.end2Minute);
             newSettings.dhw.enabled = result.dhw.enabled;
             newSettings.dhw.target = result.dhw.target;
 
@@ -627,6 +673,8 @@
 
             // MASTER
             setState('.mHeatEnabled', result.master.heating.enabled);
+            const commandState = document.getElementById('heating-command-state');
+            commandState.textContent = result.master.heating.enabled ? i18n('dashboard.schedule.allowed') : i18n('dashboard.schedule.notAllowed');
             setStatus(
               '.mHeatBlocking',
               result.master.heating.blocking ? "success" : "error",
