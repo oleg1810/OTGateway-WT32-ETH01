@@ -1,3 +1,5 @@
+#include <time.h>
+
 struct NetworkSettings {
   char hostname[25] = DEFAULT_HOSTNAME;
   bool useDhcp = true;
