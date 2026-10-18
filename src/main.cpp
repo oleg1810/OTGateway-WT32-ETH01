@@ -45,6 +45,7 @@ Sensors::Result sensorsResults[SENSORS_AMOUNT];
 
 FileData fsNetworkSettings(&LittleFS, "/network.conf", 'n', &networkSettings, sizeof(networkSettings), 1000);
 FileData fsSettings(&LittleFS, "/settings.conf", 's', &settings, sizeof(settings), 60000);
+FileData fsScheduleSettings(&LittleFS, "/schedule.conf", 't', &heatingScheduleSettings, sizeof(heatingScheduleSettings), 60000);
 FileData fsSensorsSettings(&LittleFS, "/sensors.conf", 'e', &sensorsSettings, sizeof(sensorsSettings), 60000);
 
 // Tasks
@@ -152,6 +153,25 @@ void setup() {
         ::delay(5000);
         ESP.restart();
       }
+      break;
+    default:
+      break;
+  }
+
+  // Local heating schedule uses a separate file to keep settings.conf binary-compatible.
+  switch (fsScheduleSettings.read()) {
+    case FD_FS_ERR:
+      Log.swarningln(FPSTR(L_SETTINGS_HEATING), F("Schedule filesystem error, load defaults"));
+      break;
+    case FD_FILE_ERR:
+      Log.swarningln(FPSTR(L_SETTINGS_HEATING), F("Bad schedule data, load defaults"));
+      break;
+    case FD_WRITE:
+      Log.sinfoln(FPSTR(L_SETTINGS_HEATING), F("Schedule not found, load defaults"));
+      break;
+    case FD_ADD:
+    case FD_READ:
+      Log.sinfoln(FPSTR(L_SETTINGS_HEATING), F("Heating schedule loaded"));
       break;
     default:
       break;
