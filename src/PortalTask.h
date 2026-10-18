@@ -23,7 +23,7 @@ using WebServer = ESP8266WebServer;
 using namespace NetworkUtils;
 
 extern NetworkMgr* network;
-extern FileData fsNetworkSettings, fsSettings, fsSensorsSettings;
+extern FileData fsNetworkSettings, fsSettings, fsScheduleSettings, fsSensorsSettings;
 extern MqttTask* tMqtt;
 extern OpenThermTask* tOt;
 extern SensorsTask* tSensors;
@@ -524,6 +524,7 @@ protected:
         doc.shrinkToFit();
 
         fsSettings.update();
+        fsScheduleSettings.update();
         tMqtt->resetPublishedSettingsTime();
       }
     });
