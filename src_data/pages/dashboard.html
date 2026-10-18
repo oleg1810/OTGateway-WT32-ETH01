@@ -550,7 +550,7 @@
             newSettings.heating.enabled = result.heating.enabled;
             newSettings.heating.turbo = result.heating.turbo;
             newSettings.heating.target = result.heating.target;
-            newSettings.heating.schedule = result.heating.schedule;
+            newSettings.heating.schedule = { ...result.heating.schedule };
             setCheckboxValue("[name='heating[schedule][enabled]']", result.heating.schedule.enabled);
             Object.entries(result.heating.schedule).forEach(([key, value]) => {
               setInputValue("[name='heating[schedule][" + key + "]']", value);
