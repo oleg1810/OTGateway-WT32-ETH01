@@ -1,3 +1,5 @@
+#include <time.h>
+
 struct NetworkSettings {
   char hostname[25] = DEFAULT_HOSTNAME;
   bool useDhcp = true;
@@ -38,7 +40,7 @@ struct Settings {
 
     struct {
       char server[49] = "pool.ntp.org";
-      char timezone[49] = "UTC0";
+      char timezone[49] = "EET-2EEST,M3.5.0/3,M10.5.0/4";
     } ntp;
 
     UnitSystem unitSystem = UnitSystem::METRIC;
@@ -196,6 +198,37 @@ struct Settings {
 
   char validationValue[8] = SETTINGS_VALID_VALUE;
 } settings;
+
+struct HeatingScheduleSettings {
+  bool enabled = false;
+  uint8_t start1Hour = 6;
+  uint8_t start1Minute = 0;
+  uint8_t end1Hour = 9;
+  uint8_t end1Minute = 0;
+  uint8_t start2Hour = 16;
+  uint8_t start2Minute = 0;
+  uint8_t end2Hour = 22;
+  uint8_t end2Minute = 0;
+} heatingScheduleSettings;
+
+inline bool isHeatingScheduleActive() {
+  const time_t now = time(nullptr);
+  // Fail open until NTP has supplied a plausible clock; do not turn heating off on an unknown time.
+  if (now < 1700000000) return true;
+  struct tm localTimeInfo;
+  if (localtime_r(&now, &localTimeInfo) == nullptr) return true;
+  const int current = localTimeInfo.tm_hour * 60 + localTimeInfo.tm_min;
+  auto inWindow = [current](uint8_t sh, uint8_t sm, uint8_t eh, uint8_t em) {
+    const int start = sh * 60 + sm;
+    const int end = eh * 60 + em;
+    if (start == end) return false;
+    return start < end ? (current >= start && current < end) : (current >= start || current < end);
+  };
+  return inWindow(heatingScheduleSettings.start1Hour, heatingScheduleSettings.start1Minute,
+                  heatingScheduleSettings.end1Hour, heatingScheduleSettings.end1Minute)
+      || inWindow(heatingScheduleSettings.start2Hour, heatingScheduleSettings.start2Minute,
+                  heatingScheduleSettings.end2Hour, heatingScheduleSettings.end2Minute);
+}
 
 Sensors::Settings sensorsSettings[SENSORS_AMOUNT] = {
   {

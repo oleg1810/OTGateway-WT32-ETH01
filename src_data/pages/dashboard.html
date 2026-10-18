@@ -84,6 +84,30 @@
               </div>
             </div>
 
+            <hr />
+            <details>
+              <summary><b data-i18n>settings.heating.schedule.title</b></summary>
+              <fieldset>
+                <label><input type="checkbox" name="heating[schedule][enabled]" value="true"><span data-i18n>settings.heating.schedule.enabled</span></label>
+              </fieldset>
+              <small data-i18n>settings.heating.schedule.note</small>
+              <h6 data-i18n>settings.heating.schedule.window1</h6>
+              <div class="grid">
+                <label><span data-i18n>settings.heating.schedule.startHour</span><input type="number" name="heating[schedule][start1Hour]" min="0" max="23" step="1" required></label>
+                <label><span data-i18n>settings.heating.schedule.startMinute</span><input type="number" name="heating[schedule][start1Minute]" min="0" max="59" step="1" required></label>
+                <label><span data-i18n>settings.heating.schedule.endHour</span><input type="number" name="heating[schedule][end1Hour]" min="0" max="23" step="1" required></label>
+                <label><span data-i18n>settings.heating.schedule.endMinute</span><input type="number" name="heating[schedule][end1Minute]" min="0" max="59" step="1" required></label>
+              </div>
+              <h6 data-i18n>settings.heating.schedule.window2</h6>
+              <div class="grid">
+                <label><span data-i18n>settings.heating.schedule.startHour</span><input type="number" name="heating[schedule][start2Hour]" min="0" max="23" step="1" required></label>
+                <label><span data-i18n>settings.heating.schedule.startMinute</span><input type="number" name="heating[schedule][start2Minute]" min="0" max="59" step="1" required></label>
+                <label><span data-i18n>settings.heating.schedule.endHour</span><input type="number" name="heating[schedule][end2Hour]" min="0" max="23" step="1" required></label>
+                <label><span data-i18n>settings.heating.schedule.endMinute</span><input type="number" name="heating[schedule][end2Minute]" min="0" max="59" step="1" required></label>
+              </div>
+            </details>
+            <br />
+
             <div class="notify notify-error notify-fault hidden">
               <div class="notify-icon">
                 <i class="icons-error"></i>
@@ -313,9 +337,10 @@
       let prevSettings;
       let newSettings = {
         heating: {
-          enable: false,
+          enabled: false,
           turbo: false,
-          target: 0
+          target: 0,
+          schedule: { enabled: false, start1Hour: 6, start1Minute: 0, end1Hour: 9, end1Minute: 0, start2Hour: 16, start2Minute: 0, end2Hour: 22, end2Minute: 0 }
         },
         dhw: {
           enable: false,
@@ -395,6 +420,21 @@
         document.querySelector('#tHeatEnabled').addEventListener('change', (event) => {
           modifiedTime = Date.now();
           newSettings.heating.enabled = event.currentTarget.checked;
+        });
+
+        document.querySelector("[name='heating[schedule][enabled]']").addEventListener('change', (event) => {
+          modifiedTime = Date.now();
+          newSettings.heating.schedule.enabled = event.currentTarget.checked;
+        });
+
+        document.querySelectorAll("[name^='heating[schedule]']").forEach((item) => {
+          if (item.name === 'heating[schedule][enabled]') return;
+          item.addEventListener('change', (event) => {
+            if (!event.currentTarget.checkValidity()) return;
+            const key = event.currentTarget.name.match(/\[([^\]]+)\]$/)[1];
+            newSettings.heating.schedule[key] = parseInt(event.currentTarget.value, 10);
+            modifiedTime = Date.now();
+          });
         });
 
         document.querySelector('#tHeatTurbo').addEventListener('change', (event) => {
@@ -479,6 +519,7 @@
               (prevSettings.heating.enabled != newSettings.heating.enabled)
               || (prevSettings.heating.turbo != newSettings.heating.turbo)
               || (prevSettings.heating.target != newSettings.heating.target)
+              || JSON.stringify(prevSettings.heating.schedule) != JSON.stringify(newSettings.heating.schedule)
               || (prevSettings.opentherm.options.dhwSupport && prevSettings.dhw.enabled != newSettings.dhw.enabled)
               || (prevSettings.opentherm.options.dhwSupport && prevSettings.dhw.target != newSettings.dhw.target)
             );
@@ -509,6 +550,11 @@
             newSettings.heating.enabled = result.heating.enabled;
             newSettings.heating.turbo = result.heating.turbo;
             newSettings.heating.target = result.heating.target;
+            newSettings.heating.schedule = { ...result.heating.schedule };
+            setCheckboxValue("[name='heating[schedule][enabled]']", result.heating.schedule.enabled);
+            Object.entries(result.heating.schedule).forEach(([key, value]) => {
+              setInputValue("[name='heating[schedule][" + key + "]']", value);
+            });
             newSettings.dhw.enabled = result.dhw.enabled;
             newSettings.dhw.target = result.dhw.target;
 

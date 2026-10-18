@@ -5,7 +5,7 @@ using namespace NetworkUtils;
 extern NetworkMgr* network;
 extern MqttTask* tMqtt;
 extern OpenThermTask* tOt;
-extern FileData fsNetworkSettings, fsSettings, fsSensorsSettings;
+extern FileData fsNetworkSettings, fsSettings, fsScheduleSettings, fsSensorsSettings;
 extern ESPTelnetStream* telnetStream;
 extern BootLog bootLog;
 
@@ -76,6 +76,10 @@ protected:
 
     if (fsSettings.tick() == FD_WRITE) {
       Log.sinfoln(FPSTR(L_SETTINGS), F("Updated"));
+    }
+
+    if (fsScheduleSettings.tick() == FD_WRITE) {
+      Log.sinfoln(FPSTR(L_SETTINGS_HEATING), F("Schedule updated"));
     }
 
     if (fsSensorsSettings.tick() == FD_WRITE) {

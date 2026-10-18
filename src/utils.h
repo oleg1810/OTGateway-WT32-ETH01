@@ -490,6 +490,16 @@ void settingsToJson(const Settings& src, JsonVariant dst, bool safe = false) {
   
   auto heating = dst[FPSTR(S_HEATING)].to<JsonObject>();
   heating[FPSTR(S_ENABLED)] = src.heating.enabled;
+  auto schedule = heating["schedule"].to<JsonObject>();
+  schedule["enabled"] = heatingScheduleSettings.enabled;
+  schedule["start1Hour"] = heatingScheduleSettings.start1Hour;
+  schedule["start1Minute"] = heatingScheduleSettings.start1Minute;
+  schedule["end1Hour"] = heatingScheduleSettings.end1Hour;
+  schedule["end1Minute"] = heatingScheduleSettings.end1Minute;
+  schedule["start2Hour"] = heatingScheduleSettings.start2Hour;
+  schedule["start2Minute"] = heatingScheduleSettings.start2Minute;
+  schedule["end2Hour"] = heatingScheduleSettings.end2Hour;
+  schedule["end2Minute"] = heatingScheduleSettings.end2Minute;
   heating[FPSTR(S_TURBO)] = src.heating.turbo;
   heating[FPSTR(S_TARGET)] = roundf(src.heating.target, 2);
   heating[FPSTR(S_HYSTERESIS)][FPSTR(S_ENABLED)] = src.heating.hysteresis.enabled;
@@ -1315,6 +1325,38 @@ bool jsonToSettings(const JsonVariantConst src, Settings& dst, bool safe = false
       dst.heating.enabled = value;
       changed = true;
     }
+  }
+
+  // Local daily heating schedule
+  {
+    JsonVariantConst schedule = src[FPSTR(S_HEATING)]["schedule"];
+    auto setBool = [&](const char* key, bool& field) {
+      if (schedule[key].is<bool>()) {
+        bool value = schedule[key].as<bool>();
+        if (value != field) { field = value; changed = true; }
+      }
+    };
+    auto setHour = [&](const char* key, uint8_t& field) {
+      if (!schedule[key].isNull()) {
+        int value = schedule[key].as<int>();
+        if (value >= 0 && value <= 23 && value != field) { field = value; changed = true; }
+      }
+    };
+    auto setMinute = [&](const char* key, uint8_t& field) {
+      if (!schedule[key].isNull()) {
+        int value = schedule[key].as<int>();
+        if (value >= 0 && value <= 59 && value != field) { field = value; changed = true; }
+      }
+    };
+    setBool("enabled", heatingScheduleSettings.enabled);
+    setHour("start1Hour", heatingScheduleSettings.start1Hour);
+    setMinute("start1Minute", heatingScheduleSettings.start1Minute);
+    setHour("end1Hour", heatingScheduleSettings.end1Hour);
+    setMinute("end1Minute", heatingScheduleSettings.end1Minute);
+    setHour("start2Hour", heatingScheduleSettings.start2Hour);
+    setMinute("start2Minute", heatingScheduleSettings.start2Minute);
+    setHour("end2Hour", heatingScheduleSettings.end2Hour);
+    setMinute("end2Minute", heatingScheduleSettings.end2Minute);
   }
 
   if (src[FPSTR(S_HEATING)][FPSTR(S_TURBO)].is<bool>()) {
