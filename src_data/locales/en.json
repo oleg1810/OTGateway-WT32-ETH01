@@ -86,17 +86,6 @@
         "enable": "Enable",
         "turbo": "Turbo mode"
       },
-      "schedule": {
-        "enabled": "Daily heating timer",
-        "times": "Heating schedule",
-        "start1": "Window 1 start",
-        "end1": "Window 1 end",
-        "start2": "Window 2 start",
-        "end2": "Window 2 end",
-        "command": "Boiler heating command",
-        "allowed": "allowed",
-        "notAllowed": "not allowed"
-      },
 
       "notify": {
         "fault": {
