@@ -491,15 +491,15 @@ void settingsToJson(const Settings& src, JsonVariant dst, bool safe = false) {
   auto heating = dst[FPSTR(S_HEATING)].to<JsonObject>();
   heating[FPSTR(S_ENABLED)] = src.heating.enabled;
   auto schedule = heating["schedule"].to<JsonObject>();
-  schedule["enabled"] = src.heating.schedule.enabled;
-  schedule["start1Hour"] = src.heating.schedule.start1Hour;
-  schedule["start1Minute"] = src.heating.schedule.start1Minute;
-  schedule["end1Hour"] = src.heating.schedule.end1Hour;
-  schedule["end1Minute"] = src.heating.schedule.end1Minute;
-  schedule["start2Hour"] = src.heating.schedule.start2Hour;
-  schedule["start2Minute"] = src.heating.schedule.start2Minute;
-  schedule["end2Hour"] = src.heating.schedule.end2Hour;
-  schedule["end2Minute"] = src.heating.schedule.end2Minute;
+  schedule["enabled"] = heatingScheduleSettings.enabled;
+  schedule["start1Hour"] = heatingScheduleSettings.start1Hour;
+  schedule["start1Minute"] = heatingScheduleSettings.start1Minute;
+  schedule["end1Hour"] = heatingScheduleSettings.end1Hour;
+  schedule["end1Minute"] = heatingScheduleSettings.end1Minute;
+  schedule["start2Hour"] = heatingScheduleSettings.start2Hour;
+  schedule["start2Minute"] = heatingScheduleSettings.start2Minute;
+  schedule["end2Hour"] = heatingScheduleSettings.end2Hour;
+  schedule["end2Minute"] = heatingScheduleSettings.end2Minute;
   heating[FPSTR(S_TURBO)] = src.heating.turbo;
   heating[FPSTR(S_TARGET)] = roundf(src.heating.target, 2);
   heating[FPSTR(S_HYSTERESIS)][FPSTR(S_ENABLED)] = src.heating.hysteresis.enabled;
@@ -1348,15 +1348,15 @@ bool jsonToSettings(const JsonVariantConst src, Settings& dst, bool safe = false
         if (value >= 0 && value <= 59 && value != field) { field = value; changed = true; }
       }
     };
-    setBool("enabled", dst.heating.schedule.enabled);
-    setHour("start1Hour", dst.heating.schedule.start1Hour);
-    setMinute("start1Minute", dst.heating.schedule.start1Minute);
-    setHour("end1Hour", dst.heating.schedule.end1Hour);
-    setMinute("end1Minute", dst.heating.schedule.end1Minute);
-    setHour("start2Hour", dst.heating.schedule.start2Hour);
-    setMinute("start2Minute", dst.heating.schedule.start2Minute);
-    setHour("end2Hour", dst.heating.schedule.end2Hour);
-    setMinute("end2Minute", dst.heating.schedule.end2Minute);
+    setBool("enabled", heatingScheduleSettings.enabled);
+    setHour("start1Hour", heatingScheduleSettings.start1Hour);
+    setMinute("start1Minute", heatingScheduleSettings.start1Minute);
+    setHour("end1Hour", heatingScheduleSettings.end1Hour);
+    setMinute("end1Minute", heatingScheduleSettings.end1Minute);
+    setHour("start2Hour", heatingScheduleSettings.start2Hour);
+    setMinute("start2Minute", heatingScheduleSettings.start2Minute);
+    setHour("end2Hour", heatingScheduleSettings.end2Hour);
+    setMinute("end2Minute", heatingScheduleSettings.end2Minute);
   }
 
   if (src[FPSTR(S_HEATING)][FPSTR(S_TURBO)].is<bool>()) {
